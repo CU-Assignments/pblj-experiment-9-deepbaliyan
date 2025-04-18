@@ -1,0 +1,104 @@
+1.Develop a Hibernate-based application to perform CRUD (Create, Read, Update, Delete) operations on a Student entity using Hibernate ORM with MySQL.
+Requirements:
+1.	Configure Hibernate using hibernate.cfg.xml.
+2.	Create an Entity class (Student.java) with attributes: id, name, and age.
+3.	Implement Hibernate SessionFactory to perform CRUD operations.
+4.	Test the CRUD functionality with sample data
+
+Code : 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+import javax.persistence.*;
+
+public class HibernateStudentApp {
+
+    // ---------- Student Entity ----------
+    @Entity
+    @Table(name = "students")
+    public static class Student {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private int id;
+        private String name;
+        private int age;
+
+        public Student() {}
+        public Student(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
+
+        // Getters and Setters
+        public int getId() { return id; }
+        public void setId(int id) { this.id = id; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public int getAge() { return age; }
+        public void setAge(int age) { this.age = age; }
+
+        @Override
+        public String toString() {
+            return "Student [id=" + id + ", name=" + name + ", age=" + age + "]";
+        }
+    }
+
+    // ---------- Hibernate Utility ----------
+    public static class HibernateUtil {
+        private static final SessionFactory sessionFactory;
+
+        static {
+            try {
+                Configuration cfg = new Configuration();
+                cfg.configure("hibernate.cfg.xml"); // make sure hibernate.cfg.xml is in src directory
+                cfg.addAnnotatedClass(Student.class);
+                sessionFactory = cfg.buildSessionFactory();
+            } catch (Throwable ex) {
+                throw new ExceptionInInitializerError(ex);
+            }
+        }
+
+        public static SessionFactory getSessionFactory() {
+            return sessionFactory;
+        }
+    }
+
+    // ---------- Main Logic ----------
+    public static void main(String[] args) {
+        SessionFactory factory = HibernateUtil.getSessionFactory();
+
+        // Create
+        Student student = new Student("Alice", 22);
+        try (Session session = factory.openSession()) {
+            Transaction tx = session.beginTransaction();
+            session.save(student);
+            tx.commit();
+            System.out.println("Created: " + student);
+        }
+
+        // Read
+        try (Session session = factory.openSession()) {
+            Student fetched = session.get(Student.class, student.getId());
+            System.out.println("Fetched: " + fetched);
+
+            // Update
+            Transaction tx = session.beginTransaction();
+            fetched.setAge(23);
+            session.update(fetched);
+            tx.commit();
+            System.out.println("Updated: " + fetched);
+
+            // Delete
+            tx = session.beginTransaction();
+            session.delete(fetched);
+            tx.commit();
+            System.out.println("Deleted: " + fetched);
+        }
+
+        factory.close();
+    }
+}
